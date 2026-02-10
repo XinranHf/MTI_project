@@ -54,11 +54,11 @@ def HXconv(x, B, conv=None):
     
     Bpad = np.pad(B, ((pad_pre_m, pad_post_m), (pad_pre_n, pad_post_n)), 
                   mode='constant', constant_values=0)
-    Bpad = np.fft.fftshift(Bpad)
+    Bpad = np.fft.fftshift(Bpad) # Modify the kernel to have a Fourier transform centered after the FFT
     
-    BF = np.fft.fft2(Bpad)
+    BF = np.fft.fft2(Bpad) # Calculates H, H^T and H^T*H=|H|^2 at the same time to reduce computational resourcesH
     BCF = np.conj(BF)
-    B2F = np.abs(BF) ** 2
+    B2F = np.abs(BF) ** 2 
     
     y = None
     
@@ -71,4 +71,8 @@ def HXconv(x, B, conv=None):
     elif conv == 'HTHx':
         y = np.real(np.fft.ifft2(B2F * np.fft.fft2(x)))
     
+    # y is the new image 
+    # if conv='Hx' y is the convolved image
+    # if conv='HTx' y is the correlated, back-projected image
+    # if conv='HtHx' y is the doubly filtered image
     return BF, BCF, B2F, y, Bpad
