@@ -81,14 +81,38 @@ def initialize_parameters():
     FB, FBC, F2B, Bx, _ = HXconv(refl, B, 'Hx')
     
     # 1.4. Apply the blurring operator on the original image
+    
+    #N = refl.size
+    #Ni = int(np.sqrt(N))
+    #beta = 0.35
+    #kappa1 = 13
+    #kappa2 = 40
+    
+    #D = kappa2 * np.random.binomial(1, beta, (Ni, Ni)).astype(float)
+    #D[D == 0] = kappa1
+    #y = Bx + D * np.random.randn(Ni, Ni)
+    
+    ####
+    
     N = refl.size
     Ni = int(np.sqrt(N))
-    beta = 0.35
-    kappa1 = 13
-    kappa2 = 40
     
-    D = kappa2 * np.random.binomial(1, beta, (Ni, Ni)).astype(float)
-    D[D == 0] = kappa1
+    target_SNR = 30  # in dB
+    #signal_power = np.sum(Bx**2)
+    signal_power=np.mean(Bx**2)
+    
+    #M1, M2 = B.shape
+    #noise_power = signal_power / (M1*10**(target_SNR / 10))
+    
+    # calculate std of noise to achieve target SNR
+    noise_power = signal_power / (10**(target_SNR / 10))
+    # On peut faire directement signal_power=np.mean pour enlever le M1
+    noise_std = np.sqrt(noise_power)
+    
+    # Changer par rng pour reproductibilité du code
+    # rng = np.random.default_rng(1)
+    # noise_samples = noise_std * rng.standard_normal((Ni, Ni))
+    D = noise_std * np.ones((Ni, Ni)) # D le bruit
     y = Bx + D * np.random.randn(Ni, Ni)
     
     # 1.5. Define the parameters of SPA
@@ -100,8 +124,22 @@ def initialize_parameters():
     N_bi = 200   # number of burn-in iterations
     
     # 1.7. Other parameters and precomputing
-    gamma = 6e-3  # regularization parameter (fixed here)
-    D = D ** (-2)  # precision matrix associated to the likelihood
+    # gamma = 6e-3  # regularization parameter (fixed here)
+    # D = D ** (-2)  # precision matrix associated to the likelihood
+    # mu1 = 0.99 / np.max(D)  # parameter used in AuxV1 method embedded in SPA
+    # N = y.shape[0]
+    
+    # 1.7. Other parameters and precomputing
+    if target_SNR <= 25:
+        gamma = 1e-2  # Plus de régularisation pour SNR 20
+    else:
+        gamma = 6e-3  # regularization parameter (fixed here)
+        
+    #D = D ** (-2)  # precision matrix associated to the likelihood
+    # We recalculate the precision of the matrix
+    # Les 2 D ont une utilités différentes ?
+    precision = 1.0 / (noise_std**2)
+    D = np.ones((Ni, Ni)) * precision
     mu1 = 0.99 / np.max(D)  # parameter used in AuxV1 method embedded in SPA
     N = y.shape[0]
     
