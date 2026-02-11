@@ -117,7 +117,7 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     # Changer par rng pour reproductibilité du code
     # rng = np.random.default_rng(1)
     # noise_samples = noise_std * rng.standard_normal((Ni, Ni))
-    D = noise_std * np.ones((Ni, Ni)) # D le bruit
+    D = noise_std # D le bruit
     y = Bx + D * np.random.randn(Ni, Ni)
     
     # 1.5. Define the parameters of SPA
@@ -141,7 +141,7 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
 
     D = D**(-2) # precision matrix associated to the likelihood
     mu1 = 0.99 / D # parameter used in AuxV1 method embedded in SPA
-    N = y.shape[0]
+    N = y.shape[0] # Number of lines or column of y
     
     # Package all parameters
     params = {
@@ -155,7 +155,7 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
         'FBC': FBC,
         'gamma': gamma,
         'F2L': F2L, # H^T  and 
-        'N_pixel': N_pixel,
+        'N': N,
         'N_MC': N_MC,
         'N_burn_in': N_burn_in,
         'refl': refl
