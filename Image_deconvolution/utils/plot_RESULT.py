@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_RESULT(img_noise, img_original, X_MC, Z_MC, U_MC, N_burn_in, N):
+def plot_RESULT(img_noise, img_original, X_MC, N_burn_in, N):
     """
     Plot results from the SPA algorithm.
     
@@ -20,10 +20,6 @@ def plot_RESULT(img_noise, img_original, X_MC, Z_MC, U_MC, N_burn_in, N):
         Original image.
     X_MC : ndarray
         MCMC samples of x (N x N x N_MC).
-    Z_MC : ndarray
-        MCMC samples of z (N x N x N_MC).
-    U_MC : ndarray
-        MCMC samples of u (N x N x N_MC).
     N_burn_in : int
         Number of burn-in iterations.
     N : int
@@ -58,22 +54,22 @@ def plot_RESULT(img_noise, img_original, X_MC, Z_MC, U_MC, N_burn_in, N):
     plt.title('MMSE estimate of x')
     plt.tight_layout()
     
-    # Plot the MMSE of z
-    plt.figure(4, figsize=(8, 8))
-    plt.imshow(np.mean(Z_MC[:, :, N_burn_in:], axis=2), cmap='gray', vmin=0, vmax=255)
-    plt.axis('equal')
-    plt.axis('off')
-    plt.title('MMSE estimate of z')
-    plt.tight_layout()
+    # # Plot the MMSE of z
+    # plt.figure(4, figsize=(8, 8))
+    # plt.imshow(np.mean(Z_MC[:, :, N_burn_in:], axis=2), cmap='gray', vmin=0, vmax=255)
+    # plt.axis('equal')
+    # plt.axis('off')
+    # plt.title('MMSE estimate of z')
+    # plt.tight_layout()
     
-    # Plot the MMSE of u
-    plt.figure(5, figsize=(8, 8))
-    im = plt.imshow(np.mean(U_MC[:, :, N_burn_in:], axis=2), cmap='gray')
-    plt.colorbar(im)
-    plt.axis('equal')
-    plt.axis('off')
-    plt.title('MMSE estimate of u')
-    plt.tight_layout()
+    # # Plot the MMSE of u
+    # plt.figure(5, figsize=(8, 8))
+    # im = plt.imshow(np.mean(U_MC[:, :, N_burn_in:], axis=2), cmap='gray')
+    # plt.colorbar(im)
+    # plt.axis('equal')
+    # plt.axis('off')
+    # plt.title('MMSE estimate of u')
+    # plt.tight_layout()
     
     # 2. PLOT THE 90% CREDIBILITY INTERVALS
     CI_90 = np.zeros((N, N))
