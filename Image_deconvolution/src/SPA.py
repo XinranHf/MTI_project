@@ -10,7 +10,7 @@ from tqdm import tqdm
 import time
 
 
-def SPA(D, mu1, FB, F2B, rho, alpha, y, FBC, gamma, F2L, N, N_MC):
+def SPA(D, mu1, FB, F2B, rho, alpha, img_noisy, FBC, gamma, F2L, N, N_MC):
     """
     Compute the SPA algorithm for image deconvolution.
     
@@ -28,7 +28,7 @@ def SPA(D, mu1, FB, F2B, rho, alpha, y, FBC, gamma, F2L, N, N_MC):
         User-defined standard deviation of the variable of interest x.
     alpha : float
         User-defined hyperparameter of the prior p(u).
-    y : ndarray
+    img_noisy : ndarray
         Observations (2D-array).
     FBC : ndarray
         Conjugate of FB.
@@ -84,7 +84,7 @@ def SPA(D, mu1, FB, F2B, rho, alpha, y, FBC, gamma, F2L, N, N_MC):
         z0 = np.fft.fft2(Z_MC[:, :, t])
         u0 = np.fft.fft2(U_MC[:, :, t])
         precision = (1 / mu1) * F2B + (1 / rho**2)
-        moy = (FBC * np.fft.fft2(D * y) +
+        moy = (FBC * np.fft.fft2(D * img_noisy) +
                (1 / rho**2) * (z0 - u0) +
                FBC * np.fft.fft2(v1)) / precision
         
