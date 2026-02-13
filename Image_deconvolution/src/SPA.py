@@ -10,7 +10,7 @@ from tqdm import tqdm
 import time
 
 
-def SPA(D, mu1, FB, F2B, rho, alpha, y, FBC, gamma, F2L, N, N_MC):
+def SPA(D, mu1, F_blur_kernel, rho, alpha, img_noisy, gamma, F_Laplace, N, N_MC):
     """
     Compute the SPA algorithm for image deconvolution.
     
@@ -20,22 +20,18 @@ def SPA(D, mu1, FB, F2B, rho, alpha, y, FBC, gamma, F2L, N, N_MC):
         Precision matrix associated to the likelihood.
     mu1 : float
         Hyperparameter used in the AuxV1 algorithm.
-    FB : ndarray
+    F_blur_kernel : ndarray
         Counterpart of the blur operator in the Fourier domain.
-    F2B : ndarray
-        Same as FB with coefficients equal to |FB|^2.
     rho : float
         User-defined standard deviation of the variable of interest x.
     alpha : float
         User-defined hyperparameter of the prior p(u).
-    y : ndarray
+    img_noisy : ndarray
         Observations (2D-array).
-    FBC : ndarray
-        Conjugate of FB.
     gamma : float
         Regularization parameter.
-    F2L : ndarray
-        Same as FL with coefficients equal to |FL|^2.
+    F_Laplace : ndarray
+        Counterpart of the Laplace operator in the Fourier domain.
     N : int
         Dimension of x (N x N array).
     N_MC : int
@@ -66,13 +62,19 @@ def SPA(D, mu1, FB, F2B, rho, alpha, y, FBC, gamma, F2L, N, N_MC):
     Z_MC[:, :, 0] = np.random.rand(N, N) * 255
     U_MC[:, :, 0] = np.random.rand(N, N) * 255
     
+    # Precompute Fourier domain matrices
+    F_conj_blur_kernel = np.conj(F_blur_kernel)
+    F_abs_blur_kernel = np.abs(F_blur_kernel) ** 2
+    F_abs_Laplace = np.abs(F_Laplace) ** 2
+     
+    
     # Gibbs sampling
     for t in tqdm(range(N_MC - 1), desc='Sampling in progress'):
         
         # 1. Sampling x with the method AuxV1
         
         # 1.1. Sampling the auxiliary variable v1
-        moy = (1 / mu1 - D) * np.real(np.fft.ifft2(FB * np.fft.fft2(X_MC[:, :, t])))
+        moy = (1 / mu1 - D) * np.real(np.fft.ifft2(F_blur_kernel * np.fft.fft2(X_MC[:, :, t])))
         moy = moy.reshape(-1)
         sigma = 1 / mu1 - D.reshape(-1)
         
@@ -83,17 +85,17 @@ def SPA(D, mu1, FB, F2B, rho, alpha, y, FBC, gamma, F2L, N, N_MC):
         # 1.2. Sampling the variable of interest x
         z0 = np.fft.fft2(Z_MC[:, :, t])
         u0 = np.fft.fft2(U_MC[:, :, t])
-        precision = (1 / mu1) * F2B + (1 / rho**2)
-        moy = (FBC * np.fft.fft2(D * y) +
+        precision = (1 / mu1) * F_abs_blur_kernel + (1 / rho**2)
+        moy = (F_conj_blur_kernel * np.fft.fft2(D * img_noisy) +
                (1 / rho**2) * (z0 - u0) +
-               FBC * np.fft.fft2(v1)) / precision
+               F_conj_blur_kernel * np.fft.fft2(v1)) / precision
         
         eps = np.sqrt(0.5) * (np.random.randn(N, N) + 1j * np.random.randn(N, N))
         x0 = moy + eps / np.sqrt(precision)
         X_MC[:, :, t + 1] = np.real(np.fft.ifft2(x0))
         
         # 2. Sampling z
-        precision = gamma * F2L.reshape(-1) + (1 / rho**2)
+        precision = gamma * F_abs_Laplace.reshape(-1) + (1 / rho**2)
         x0 = np.fft.fft2(X_MC[:, :, t + 1]).reshape(-1)
         u0 = np.fft.fft2(U_MC[:, :, t]).reshape(-1)
         moy = (1 / rho**2) * (x0 + u0) / precision

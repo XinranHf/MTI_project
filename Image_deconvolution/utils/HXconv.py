@@ -13,7 +13,7 @@ Note:
 import numpy as np
 
 
-def HXconv(x, B, conv=None):
+def HXconv(x, kernel, conv=None):
     """
     Compute convolution operations using Fourier transforms.
     
@@ -21,58 +21,57 @@ def HXconv(x, B, conv=None):
     ----------
     x : ndarray
         Input signal/image (2D array).
-    B : ndarray
+    kernel : ndarray
         Either the PSF (if conv is specified) or the FFT of PSF (if conv is None).
     conv : str, optional
-        Type of operation: 'Hx', 'HTx', or 'HTHx'.
+        Type of operation: 'Hx'.
         If None, only returns Fourier domain matrices.
     
     Returns
     -------
-    BF : ndarray
+    F_kernel : ndarray
         FFT of the padded PSF.
-    BCF : ndarray
-        Complex conjugate of BF.
-    B2F : ndarray
-        Magnitude squared of BF.
-    y : ndarray or None
+
+    conv_kernel_x : ndarray or None
         Result of convolution operation (if conv is specified).
-    Bpad : ndarray
-        Padded PSF.
+
     """
     
     m, n = x.shape
-    m0, n0 = B.shape
+    m0, n0 = kernel.shape
     
-    # Pad B to match size of x
-    # Equivalent to MATLAB's: padarray(B, floor([m-m0+1, n-n0+1]/2), 'pre')
-    #                   then: padarray(Bpad, round([m-m0-1, n-n0-1]/2), 'post')
+    # Pad kernel to match size of x
+    # Equivalent to MATLAB's: padarray(kernel, floor([m-m0+1, n-n0+1]/2), 'pre')
+    #                   then: padarray(kernel_pad, round([m-m0-1, n-n0-1]/2), 'post')
     pad_pre_m = (m - m0 + 1) // 2
     pad_pre_n = (n - n0 + 1) // 2
     pad_post_m = int(np.round((m - m0 - 1) / 2))
     pad_post_n = int(np.round((n - n0 - 1) / 2))
     
-    Bpad = np.pad(B, ((pad_pre_m, pad_post_m), (pad_pre_n, pad_post_n)), 
+    kernel_pad = np.pad(kernel, ((pad_pre_m, pad_post_m), (pad_pre_n, pad_post_n)), 
                   mode='constant', constant_values=0)
-    Bpad = np.fft.fftshift(Bpad) # Modify the kernel to have a Fourier transform centered after the FFT
+    kernel_pad = np.fft.fftshift(kernel_pad) # Modify the kernel to have a Fourier transform centered after the FFT
     
-    BF = np.fft.fft2(Bpad) # Calculates H, H^T and H^T*H=|H|^2 at the same time to reduce computational resourcesH
-    BCF = np.conj(BF)
-    B2F = np.abs(BF) ** 2 
+    F_kernel = np.fft.fft2(kernel_pad) # Calculates H, H^T and H^T*H=|H|^2 at the same time to reduce computational resourcesH
+    # BCF = np.conj(BF)
+    # B2F = np.abs(BF) ** 2 
     
-    y = None
+    conv_kernel_x = None
     
     if conv is None:
-        return BF, BCF, B2F, y, Bpad
+        # return BF, BCF, B2F, y, Bpad
+        return F_kernel, conv_kernel_x
     elif conv == 'Hx':
-        y = np.real(np.fft.ifft2(BF * np.fft.fft2(x)))
-    elif conv == 'HTx':
-        y = np.real(np.fft.ifft2(BCF * np.fft.fft2(x)))
-    elif conv == 'HTHx':
-        y = np.real(np.fft.ifft2(B2F * np.fft.fft2(x)))
+        conv_kernel_x = np.real(np.fft.ifft2(F_kernel * np.fft.fft2(x)))
+    # elif conv == 'HTx':
+    #     y = np.real(np.fft.ifft2(BCF * np.fft.fft2(x)))
+    # elif conv == 'HTHx':
+    #     y = np.real(np.fft.ifft2(B2F * np.fft.fft2(x)))
     
     # y is the new image 
     # if conv='Hx' y is the convolved image
     # if conv='HTx' y is the correlated, back-projected image
     # if conv='HtHx' y is the doubly filtered image
-    return BF, BCF, B2F, y, Bpad
+    # return BF, BCF, B2F, y, Bpad
+    
+    return F_kernel, conv_kernel_x
