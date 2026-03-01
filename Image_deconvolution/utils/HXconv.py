@@ -22,18 +22,18 @@ def HXconv(x, kernel, conv=None):
     x : ndarray
         Input signal/image (2D array).
     kernel : ndarray
-        Either the PSF (if conv is specified) or the FFT of PSF (if conv is None).
+        The convolution kernel, for example a PSF or a gaussian kernel. This can be either the kernel (if conv is specified) or the FFT of the kernel (if conv is None).
     conv : str, optional
-        Type of operation: 'Hx'.
+        Type of operation: 'Hx'. By default a standard convolution.
         If None, only returns Fourier domain matrices.
     
     Returns
     -------
     F_kernel : ndarray
-        FFT of the padded PSF.
+        FFT of the kernel.
 
     conv_kernel_x : ndarray or None
-        Result of convolution operation (if conv is specified).
+        The convolved image obtained after the convolution operation with the kernel (if conv is specified).
 
     """
     
@@ -41,8 +41,6 @@ def HXconv(x, kernel, conv=None):
     m0, n0 = kernel.shape
     
     # Pad kernel to match size of x
-    # Equivalent to MATLAB's: padarray(kernel, floor([m-m0+1, n-n0+1]/2), 'pre')
-    #                   then: padarray(kernel_pad, round([m-m0-1, n-n0-1]/2), 'post')
     pad_pre_m = (m - m0 + 1) // 2
     pad_pre_n = (n - n0 + 1) // 2
     pad_post_m = int(np.round((m - m0 - 1) / 2))
@@ -50,11 +48,19 @@ def HXconv(x, kernel, conv=None):
     
     kernel_pad = np.pad(kernel, ((pad_pre_m, pad_post_m), (pad_pre_n, pad_post_n)), 
                   mode='constant', constant_values=0)
-    kernel_pad = np.fft.fftshift(kernel_pad) # Modify the kernel to have a Fourier transform centered after the FFT
     
-    F_kernel = np.fft.fft2(kernel_pad) # Calculates H, H^T and H^T*H=|H|^2 at the same time to reduce computational resourcesH
+    # Modify the kernel to have a Fourier transform centered after the FFT
+    kernel_pad = np.fft.fftshift(kernel_pad) 
+    
+    # Calculate the fourier transform of the kernel
+    F_kernel = np.fft.fft2(kernel_pad) 
     # BCF = np.conj(BF)
     # B2F = np.abs(BF) ** 2 
+    
+    # Now we can calculate the convolved image
+    # 1) We calculate the Fourier transform of our image x : F_x
+    # 2) We multiply the two Fourier transform : F_kernel * F_x
+    # 3) We calculate the image by doing the inverse Fourier transform of the product
     
     conv_kernel_x = None
     
@@ -63,15 +69,17 @@ def HXconv(x, kernel, conv=None):
         return F_kernel, conv_kernel_x
     elif conv == 'Hx':
         conv_kernel_x = np.real(np.fft.ifft2(F_kernel * np.fft.fft2(x)))
+        
     # elif conv == 'HTx':
-    #     y = np.real(np.fft.ifft2(BCF * np.fft.fft2(x)))
+    #     conv_kernel_x = np.real(np.fft.ifft2(BCF * np.fft.fft2(x)))
     # elif conv == 'HTHx':
-    #     y = np.real(np.fft.ifft2(B2F * np.fft.fft2(x)))
+    #     conv_kernel_x = np.real(np.fft.ifft2(B2F * np.fft.fft2(x)))
     
-    # y is the new image 
-    # if conv='Hx' y is the convolved image
-    # if conv='HTx' y is the correlated, back-projected image
-    # if conv='HtHx' y is the doubly filtered image
-    # return BF, BCF, B2F, y, Bpad
+    # conv_kernel_x is the new image, the one obtained after the convolution with the kernel
+    
+    # if conv='Hx' conv_kernel_x is the convolved image
+    # if conv='HTx' conv_kernel_x is the correlated, back-projected image
+    # if conv='HtHx' conv_kernel_x is the doubly filtered image
+    # return F_kernel, BCF, B2F, conv_kernel x, Bpad
     
     return F_kernel, conv_kernel_x

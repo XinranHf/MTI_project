@@ -67,7 +67,7 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     """
     
     # Set random seed
-    np.random.seed(seed)
+    rng = np.random.default_rng(seed=seed)
     
     # 1.1. Load original 512 x 512 image
     # Try to load lena.bmp if available, otherwise use scikit-image's camera
@@ -123,11 +123,8 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     # On peut faire directement signal_power=np.mean pour enlever le M1
     noise_std = np.sqrt(noise_power)
     
-    # Changer par rng pour reproductibilité du code
-    # rng = np.random.default_rng(seed=seed) # TO DO
-    # noise_samples = noise_std * rng.standard_normal((Ni, Ni))
     D = noise_std # D le bruit
-    img_noisy = conv_blur_kernel_x + D * np.random.randn(Ni, Ni)
+    img_noisy = conv_blur_kernel_x + D * rng.standard_normal((Ni, Ni))
     
     # # 1.5. Define the parameters of SPA
     # rho = rho
