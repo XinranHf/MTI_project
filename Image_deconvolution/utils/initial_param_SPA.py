@@ -35,7 +35,7 @@ def fspecial_gaussian(size, sigma):
     return g / g.sum()
 
 
-def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp', gamma=6e-3,rho=20, alpha=1,delta = 1e-1, N_MC=1000, N_burn_in=200, TARGET=30, seed=1):
+def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp', gamma=6e-3,delta = 1e-1, TARGET=30, seed=1):
     """
     Initialize all parameters for the SPA algorithm.
     
@@ -49,16 +49,11 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
         path of the image x
     gamma : float
         Regularization parameter.
-    rho : float
-        User-defined standard deviation of the variable of interest x.
-    alpha : float
-        User-defined hyperparameter of the prior p(u).
-    N_MC : int
-        Total number of MCMC iterations.
-    N_burn_in : int
-        Number of burn-in iterations
+    
     TARGET : int
         Target SNR in dB
+    seed :
+        Random seed for the reproducibility
  
     Returns
     -------
@@ -126,15 +121,6 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     D = noise_std # D le bruit
     img_noisy = conv_blur_kernel_x + D * rng.standard_normal((Ni, Ni))
     
-    # # 1.5. Define the parameters of SPA
-    # rho = rho
-    # alpha = alpha
-    
-    # On peut techniquement enlever le 1.6
-    # 1.6. Define MCMC parameters 
-    N_MC = N_MC  # total number of MCMC iterations
-    N_burn_in = N_burn_in   # number of burn-in iterations
-    
     # 1.7. Other parameters and precomputing
     # gamma = 6e-3  # regularization parameter (fixed here)
     # D = D ** (-2)  # precision matrix associated to the likelihood
@@ -156,15 +142,11 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
         'F_blur_kernel': F_blur_kernel, # H
         'F_Laplace': F_Laplace, # L
         # 'F2B': F2B, # kerne H^T*H=|H|^2
-        'rho': rho,
-        'alpha': alpha,
         'img_noisy': img_noisy,
         #'FBC': FBC,
         'gamma': gamma,
         #'F2L': F2L, # H^T  and 
         'N': N,
-        'N_MC': N_MC,
-        'N_burn_in': N_burn_in,
         'img_original': img_original
     }
     
