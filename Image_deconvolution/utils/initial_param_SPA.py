@@ -35,7 +35,7 @@ def fspecial_gaussian(size, sigma):
     return g / g.sum()
 
 
-def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp', gamma=6e-3,delta = 1e-1, TARGET=30, seed=1):
+def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp', gamma=6e-3, delta = 1e-1, target_SNR=30, seed=1):
     """
     Initialize all parameters for the SPA algorithm.
     
@@ -49,8 +49,9 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
         path of the image x
     gamma : float
         Regularization parameter.
-    
-    TARGET : int
+    delta :
+        Regularization parameter for the Laplacian 
+    target_SNR : int
         Target SNR in dB
     seed :
         Random seed for the reproducibility
@@ -109,8 +110,6 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     
     N_pixel = img_original.size
     Ni = int(np.sqrt(N_pixel))
-    
-    target_SNR = TARGET  # in dB
     signal_power=np.mean(conv_blur_kernel_x**2)
     
     # calculate std of noise to achieve target SNR
