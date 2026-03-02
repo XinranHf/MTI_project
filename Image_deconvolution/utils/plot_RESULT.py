@@ -25,34 +25,25 @@ def plot_RESULT(img_noise, img_original, X_MC, N_burn_in, N):
     N : int
         Image dimension (N x N).
     """
-    
-    plt.close('all')
-    
+        
     # 1. PLOT ORIGINAL, OBSERVATIONS AND ESTIMATES
     
-    # Plot the original image
-    plt.figure(1, figsize=(8, 8))
-    plt.imshow(img_original, cmap='gray', vmin=0, vmax=255)
-    plt.axis('equal')
-    plt.axis('off')
-    plt.title('Original image')
-    plt.tight_layout()
     
-    # Plot the noisy observation
-    plt.figure(2, figsize=(8, 8))
-    plt.imshow(img_noise, cmap='gray', vmin=0, vmax=255)
-    plt.axis('equal')
-    plt.axis('off')
-    plt.title('Blurred and noisy observation')
+    img_mmse = np.mean(X_MC[:, :, N_burn_in:], axis=2)
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+    images = [img_original, img_noise, img_mmse]
+    titles = ['Original Image', 'Blurred & Noisy Observation', 'MMSE Estimate of x']
+
+    for ax, img, title in zip(axes, images, titles):
+        ax.imshow(img, cmap='gray', vmin=0, vmax=255)
+        ax.set_title(title)
+        ax.axis('equal')
+        ax.axis('off')
+
     plt.tight_layout()
-    
-    # Plot the MMSE of x
-    plt.figure(3, figsize=(8, 8))
-    plt.imshow(np.mean(X_MC[:, :, N_burn_in:], axis=2), cmap='gray', vmin=0, vmax=255)
-    plt.axis('equal')
-    plt.axis('off')
-    plt.title('MMSE estimate of x')
-    plt.tight_layout()
+    plt.show()
     
     # # Plot the MMSE of z
     # plt.figure(4, figsize=(8, 8))
