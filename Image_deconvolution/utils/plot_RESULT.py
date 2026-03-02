@@ -73,12 +73,10 @@ def plot_RESULT(img_noise, img_original, X_MC, N_burn_in, N):
     
     # 2. PLOT THE 90% CREDIBILITY INTERVALS
     CI_90 = np.zeros((N, N))
-    for i in range(N):
-        for j in range(N):
-            arr = X_MC[i, j, N_burn_in:].reshape(-1)
-            quant_5 = np.percentile(arr, 5)
-            quant_95 = np.percentile(arr, 95)
-            CI_90[i, j] = abs(quant_95 - quant_5)
+    samples = X_MC[:, :, N_burn_in:]  # shape (N, N, N_samples)
+    quant_5  = np.percentile(samples, 5,  axis=2)
+    quant_95 = np.percentile(samples, 95, axis=2)
+    CI_90 = np.abs(quant_95 - quant_5)
     
     plt.figure(6, figsize=(8, 8))
     im = plt.imshow(CI_90, cmap='gray_r')
