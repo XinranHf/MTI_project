@@ -51,7 +51,7 @@ A key aspect of this reproduction work is the **controlled generation of noise**
 Instead of choosing noise arbitrarily, we fix a **target Signal-to-Noise Ratio (SNR)**:
 
 ```python
-TARGET = 30  # dB
+TARGET = 20  # dB
 ````
 
 The noise variance is computed as:
@@ -103,7 +103,7 @@ Hyperparameters:
 * `delta` (default: 1e-1) – Small constant for numerical stability in the Laplacian operator
 * `N_MC` (default: 1000) – Total number of MCMC iterations
 * `N_burn_in` (default: 200) – Number of burn-in iterations
-* `TARGET` (default: 30 dB) – Target Signal-to-Noise Ratio used to generate noise
+* `TARGET` (default: 20 dB) – Target Signal-to-Noise Ratio used to generate noise
 * `seed` (default: 1) – Random seed for reproducibility
 
 

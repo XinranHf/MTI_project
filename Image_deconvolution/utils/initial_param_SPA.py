@@ -34,8 +34,10 @@ def fspecial_gaussian(size, sigma):
     g = np.exp(-(x**2 + y**2) / (2 * sigma**2))
     return g / g.sum()
 
+base_dir = os.path.dirname(__file__) 
+default_path = os.path.join(base_dir, 'lena.bmp')
 
-def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp', gamma=6e-3,rho=20, alpha=1,delta = 1e-1, N_MC=1000, N_burn_in=200, TARGET=30, seed=1):
+def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image= default_path, gamma=6e-3,rho=20, alpha=1,delta = 1e-1, N_MC=1000, N_burn_in=200, TARGET=20, seed=1):
     """
     Initialize all parameters for the SPA algorithm.
     
@@ -68,8 +70,8 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     
     # Set random seed
     rng = np.random.default_rng(seed=seed)
-    
-    # 1.1. Load original 512 x 512 image
+        
+    # Load original 512 x 512 image
     # Try to load lena.bmp if available, otherwise use scikit-image's camera
     try:
         img_original = io.imread(path_image).astype(float)
@@ -86,7 +88,7 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
             from skimage.transform import resize
             img_original = resize(img_original, (512, 512), anti_aliasing=True) * 255
     
-    # 1.2. Define the regularization
+    # Define the regularization
     psf = np.array([[0, -1, 0],
                     [-1, 4, -1],
                     [0, -1, 0]])
@@ -103,14 +105,14 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
         
     
     
-    # 1.3. Define the blurring kernel and its associated Fourier matrices
+    # Define the blurring kernel and its associated Fourier matrices
     blur_kernel = fspecial_gaussian(kernel_size, kernel_sigma)
     # FB, FBC, F2B, Bx, _ = HXconv(img_original, B, 'Hx')
     
     F_blur_kernel, conv_blur_kernel_x = HXconv(img_original, blur_kernel , 'Hx')
     
     
-    # 1.4. Apply the blurring operator on the original image
+    #4. Apply the blurring operator on the original image
     
     N_pixel = img_original.size
     Ni = int(np.sqrt(N_pixel))
@@ -126,22 +128,16 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     D = noise_std # D le bruit
     img_noisy = conv_blur_kernel_x + D * rng.standard_normal((Ni, Ni))
     
-    # # 1.5. Define the parameters of SPA
-    # rho = rho
-    # alpha = alpha
-    
-    # On peut techniquement enlever le 1.6
-    # 1.6. Define MCMC parameters 
+    # Define MCMC parameters 
     N_MC = N_MC  # total number of MCMC iterations
     N_burn_in = N_burn_in   # number of burn-in iterations
     
-    # 1.7. Other parameters and precomputing
+    # Other parameters and precomputing
     # gamma = 6e-3  # regularization parameter (fixed here)
     # D = D ** (-2)  # precision matrix associated to the likelihood
     # mu1 = 0.99 / np.max(D)  # parameter used in AuxV1 method embedded in SPA
     # N = y.shape[0]
     
-    # 1.7. Other parameters and precomputing
     if target_SNR <= 25:
         gamma = 1e-2  # Plus de régularisation pour SNR 20
 

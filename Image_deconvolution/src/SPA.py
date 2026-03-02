@@ -49,7 +49,7 @@ def SPA(D, mu1, F_blur_kernel, rho, alpha, img_noisy, gamma, F_Laplace, N, N_MC)
     
     start_time = time.time()
     print('')
-    print('BEGINNING OF THE SAMPLING')
+    # print('BEGINNING OF THE SAMPLING')
     
     # Initialization
     # Define matrices to store the iterates
@@ -114,7 +114,7 @@ def SPA(D, mu1, F_blur_kernel, rho, alpha, img_noisy, gamma, F_Laplace, N, N_MC)
         U_MC[:, :, t + 1] = np.real(np.fft.ifft2(u0.reshape(N, N)))
     
     elapsed_time = time.time() - start_time
-    print('END OF THE GIBBS SAMPLING')
+    # print('END OF THE GIBBS SAMPLING')
     print(f'Execution time of the Gibbs sampling: {elapsed_time:.2f} sec')
     
-    return X_MC, Z_MC, U_MC
+    return X_MC, Z_MC, U_MC, elapsed_time
