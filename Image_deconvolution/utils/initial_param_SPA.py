@@ -14,19 +14,19 @@ import os
 
 def fspecial_gaussian(size, sigma):
     """
-    Create a Gaussian filter similar to MATLAB's fspecial('gaussian').
+    Create a Gaussian filter
     
     Parameters
     ----------
     size : int
-        Size of the filter (size x size).
+        Size of the filter (size x size)
     sigma : float
-        Standard deviation of the Gaussian.
+        Standard deviation of the Gaussian
     
     Returns
     -------
     ndarray
-        Gaussian filter kernel.
+        Gaussian filter kernel
     """
     m = n = size
     h, k = m // 2, n // 2
@@ -35,7 +35,7 @@ def fspecial_gaussian(size, sigma):
     return g / g.sum()
 
 
-def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp', gamma=6e-3, delta = 1e-1, target_SNR=30, seed=1):
+def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp', gamma=6e-3, delta = 1e-1, target_SNR=20, seed=1):
     """
     Initialize all parameters for the SPA algorithm.
     
@@ -65,7 +65,7 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     # Set random seed
     rng = np.random.default_rng(seed=seed)
     
-    # 1.1. Load original 512 x 512 image
+    # Load original 512 x 512 image
     # Try to load lena.bmp if available, otherwise use scikit-image's camera
     try:
         img_original = io.imread(path_image).astype(float)
@@ -82,53 +82,39 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
             from skimage.transform import resize
             img_original = resize(img_original, (512, 512), anti_aliasing=True) * 255
     
-    # 1.2. Define the regularization
+    # Define the regularization
     psf = np.array([[0, -1, 0],
                     [-1, 4, -1],
                     [0, -1, 0]])
-    
-    # FL, FLC, F2L, _, _ = HXconv(img_original, psf, 'Hx')
-    # delta = 1e-1
-    # FL = -FL + delta
-    # FLC = -FLC + delta
-    # F2L = np.abs(FL) ** 2
     
     
     F_Laplace, _= HXconv(img_original, psf, 'Hx') # smooth prior
     F_Laplace = -F_Laplace + delta
         
     
-    
-    # 1.3. Define the blurring kernel and its associated Fourier matrices
+    # Define the blurring kernel and its associated Fourier matrices
     blur_kernel = fspecial_gaussian(kernel_size, kernel_sigma)
-    # FB, FBC, F2B, Bx, _ = HXconv(img_original, B, 'Hx')
     
     F_blur_kernel, conv_blur_kernel_x = HXconv(img_original, blur_kernel , 'Hx')
     
     
-    # 1.4. Apply the blurring operator on the original image
+    # Apply the blurring operator on the original image
     
     N_pixel = img_original.size
     Ni = int(np.sqrt(N_pixel))
-    signal_power=np.mean(conv_blur_kernel_x**2)
+    signal_power=np.mean(conv_blur_kernel_x**2) 
     
     # calculate std of noise to achieve target SNR
     noise_power = signal_power / (10**(target_SNR / 10))
-    # On peut faire directement signal_power=np.mean pour enlever le M1
     noise_std = np.sqrt(noise_power)
     
-    D = noise_std # D le bruit
+    D = noise_std # noise
     img_noisy = conv_blur_kernel_x + D * rng.standard_normal((Ni, Ni))
     
-    # 1.7. Other parameters and precomputing
-    # gamma = 6e-3  # regularization parameter (fixed here)
-    # D = D ** (-2)  # precision matrix associated to the likelihood
-    # mu1 = 0.99 / np.max(D)  # parameter used in AuxV1 method embedded in SPA
-    # N = y.shape[0]
     
-    # 1.7. Other parameters and precomputing
+    # Other parameters and precomputing
     if target_SNR <= 25:
-        gamma = 1e-2  # Plus de régularisation pour SNR 20
+        gamma = 1e-2  # more regularization for SNR = 25
 
     D = D**(-2) # precision matrix associated to the likelihood
     mu1 = 0.99 / D # parameter used in AuxV1 method embedded in SPA
@@ -138,13 +124,10 @@ def initialize_parameters(kernel_size=39, kernel_sigma=4, path_image='lena.bmp',
     params = {
         'D': D, # Precision matrix
         'mu1': mu1, # parameter used in AuxV1 method embedded in SPA
-        'F_blur_kernel': F_blur_kernel, # H
-        'F_Laplace': F_Laplace, # L
-        # 'F2B': F2B, # kerne H^T*H=|H|^2
+        'F_blur_kernel': F_blur_kernel, 
+        'F_Laplace': F_Laplace, 
         'img_noisy': img_noisy,
-        #'FBC': FBC,
         'gamma': gamma,
-        #'F2L': F2L, # H^T  and 
         'N': N,
         'img_original': img_original
     }

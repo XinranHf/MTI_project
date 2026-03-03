@@ -71,9 +71,9 @@ def SPA(D, mu1, F_blur_kernel, rho, alpha, img_noisy, gamma, F_Laplace, N, N_MC)
     # Gibbs sampling
     for t in tqdm(range(N_MC - 1), desc='Sampling in progress'):
         
-        # 1. Sampling x with the method AuxV1
+        # Sampling x with the method AuxV1
         
-        # 1.1. Sampling the auxiliary variable v1
+        # Sampling the auxiliary variable v1
         moy = (1 / mu1 - D) * np.real(np.fft.ifft2(F_blur_kernel * np.fft.fft2(X_MC[:, :, t])))
         moy = moy.reshape(-1)
         sigma = 1 / mu1 - D.reshape(-1)
@@ -82,7 +82,7 @@ def SPA(D, mu1, F_blur_kernel, rho, alpha, img_noisy, gamma, F_Laplace, N, N_MC)
         v1 = moy + np.sqrt(sigma) * np.random.randn(N * N)
         v1 = v1.reshape(N, N)
         
-        # 1.2. Sampling the variable of interest x
+        # Sampling the variable of interest x
         z0 = np.fft.fft2(Z_MC[:, :, t])
         u0 = np.fft.fft2(U_MC[:, :, t])
         precision = (1 / mu1) * F_abs_blur_kernel + (1 / rho**2)
@@ -94,7 +94,7 @@ def SPA(D, mu1, F_blur_kernel, rho, alpha, img_noisy, gamma, F_Laplace, N, N_MC)
         x0 = moy + eps / np.sqrt(precision)
         X_MC[:, :, t + 1] = np.real(np.fft.ifft2(x0))
         
-        # 2. Sampling z
+        # Sampling z
         precision = gamma * F_abs_Laplace.reshape(-1) + (1 / rho**2)
         x0 = np.fft.fft2(X_MC[:, :, t + 1]).reshape(-1)
         u0 = np.fft.fft2(U_MC[:, :, t]).reshape(-1)
@@ -104,7 +104,7 @@ def SPA(D, mu1, F_blur_kernel, rho, alpha, img_noisy, gamma, F_Laplace, N, N_MC)
         z0 = moy + eps / np.sqrt(precision)
         Z_MC[:, :, t + 1] = np.real(np.fft.ifft2(z0.reshape(N, N)))
         
-        # 3. Sampling u
+        # Sampling u
         cov = (alpha**2 * rho**2) / (alpha**2 + rho**2)
         moy = np.fft.fft2(Z_MC[:, :, t + 1] - X_MC[:, :, t + 1]) * alpha**2 / (rho**2 + alpha**2)
         moy = moy.reshape(-1)
