@@ -1,134 +1,140 @@
-# Split-and-Augmented Gibbs Sampler (SPA) - Python Version
+# Split-and-Augmented Gibbs Sampler (SPA)  
+## Traitement du signal Course Project - SDI Centrale Lille 
 
-This is a Python conversion of the MATLAB implementation of the Split-and-Augmented Gibbs Sampler applied to image deconvolution and image inpainting.
+This repository contains a **Python reimplementation and reproducibility study** of the Split-and-Augmented Gibbs Sampler (SPA) algorithm for large-scale Bayesian inverse problems.
 
-## Reference
+This work was carried out as part of a university course project.  
+The objective was to:
 
-M. VONO et al., "Split-and-augmented Gibbs sampler - Application to large-scale inference problems", submitted, 2018.
+- Reproduce the methodology presented in the original article
+- Translate the MATLAB implementation into Python
+- Validate the algorithm on image deconvolution and inpainting tasks
 
-## Installation
 
-Install the required dependencies:
+## Reference Article
 
-```bash
-pip install -r requirements.txt
+M. Vono et al., *"Split-and-augmented Gibbs sampler - Application to large-scale inference problems"*, 2018.
+
+This repository is student reproduction for academic purposes as part of a course project and may differ slightly from the original MATLAB code.
+
+
+# Project Objectives
+
+- Understand the theoretical foundations of SPA
+- Implement the algorithm in Python
+- Reproduce numerical experiments
+- Analyze convergence and reconstruction quality
+- Study the influence of noise and regularization parameters
+
+
+# Problem Setting
+
+We consider the inverse problem:
+
+$$
+y = Hx + \varepsilon
+$$
+
+where:
+
+- $x$ is the unknown image
+- $H$ is a blur operator (Gaussian convolution)
+- $\varepsilon \sim \mathcal{N}(0, \sigma^2 I)$ is Gaussian noise
+
+Application studied: Image deconvolution  
+
+
+# Noise Management and SNR Control
+
+A key aspect of this reproduction work is the **controlled generation of noise**.
+
+Instead of choosing noise arbitrarily, we fix a **target Signal-to-Noise Ratio (SNR)**:
+
+```python
+TARGET = 30  # dB
+````
+
+The noise variance is computed as:
+
+$$
+\sigma^2 = \frac{\text{signal power}}{10^{\text{SNR}/10}}
+$$
+
+### Procedure:
+
+1. Blur the original image
+2. Compute signal power:
+   `mean((Hx)^2)`
+3. Deduce the required noise variance
+4. Generate Gaussian noise accordingly
+
+This ensures:
+
+* Reproducible experiments
+* Fair comparison across different SNR levels
+* Controlled degradation severity
+
+For low SNR values (≤ 25 dB), the regularization parameter `gamma` is automatically increased to improve stability.
+
+
+# Implementation Details
+
+## FFT-based Convolution
+
+All convolution operations are performed in the Fourier domain for efficiency using NumPy FFT.
+
+## Prior Model
+
+A Laplacian smoothness prior is used:
+
+```python
+psf = [[0, -1, 0],
+       [-1, 4, -1],
+       [0, -1, 0]]
 ```
 
-## Usage
+Hyperparameters:
 
-### Image Deconvolution
+* `kernel_size` (default: 39) – Size of the Gaussian blur kernel (39×39)
+* `kernel_sigma` (default: 4) – Standard deviation of the Gaussian blur
+* `gamma` (default: 6e-3) – Regularization strength
+* `rho` (default: 20) – Prior variance parameter
+* `alpha` (default: 1) – Auxiliary variable hyperparameter
+* `delta` (default: 1e-1) – Small constant for numerical stability in the Laplacian operator
+* `N_MC` (default: 1000) – Total number of MCMC iterations
+* `N_burn_in` (default: 200) – Number of burn-in iterations
+* `TARGET` (default: 20 dB) – Target Signal-to-Noise Ratio used to generate noise
+* `seed` (default: 1) – Random seed for reproducibility
 
-Navigate to the experiments directory and run:
 
-```bash
-cd Image_deconvolution/experiments
-python SPA_lena.py
-```
+## Reproducibility
 
-### Image Inpainting
+* Explicit random seed control via `numpy.random.default_rng`
+* Automatic fallback image if `lena.bmp` is not available
+* Deterministic SNR-based noise generation
 
-Navigate to the experiments directory and run:
 
-```bash
-cd Image_inpainting/experiments
-python SPA_cameraman.py
-```
+# Outputs
 
-## Project Structure
+The experiments produce:
+
+* PSNR and SNR metrics
+* MMSE reconstruction
+* 90% credibility intervals
+* Visualization of:
+  * Original image
+  * Blurred + noisy observation
+  * Restored image
+
+# Project Structure
 
 ```
 Image_deconvolution/
 ├── experiments/
-│   ├── SPA_lena.py          # Main script for Lena image deconvolution
-│   └── SPA_lena.m           # Original MATLAB version
+│   ├── SPA_lena.py
 ├── src/
-│   ├── SPA.py               # SPA algorithm implementation
-│   └── SPA.m                # Original MATLAB version
+│   ├── SPA.py
 └── utils/
-    ├── HXconv.py            # Convolution utilities
-    ├── initial_param_
-   - Deconvolution: Tries to load `lena.bmp` but falls back to scikit-image's camera image if not found.
-   - Inpainting: Tries to load `cameraman.tif` but falls back to scikit-image's camera image if not found.
-
-3. **FFT**: Uses NumPy's FFT implementation (`numpy.fft.fft2` and `numpy.fft.ifft2`).
-
-4. **Sparse Matrices**: Uses SciPy's sparse matrix implementation (`scipy.sparse`) instead of MATLAB's sparse matrices.
-
-5. **Multivariate Normal Sampling**: MATLAB's `mvnrnd` is replaced with direct sampling using NumPy for diagonal covariance matrices.
-
-6. **Progress Bar**: Uses `tqdm` instead of MATLAB's `waitbar`.
-
-7. **Plotting**: Uses Matplotlib instead of MATLAB's plotting functions.
-
-## Parameters
-
-### Image Deconvolution
-- **N_MC**: Total number of MCMC iterations (default: 1000)
-- **N_bi**: Number of burn-in iterations (default: 200)
-- **rho**: Standard deviation parameter (default: 20)
-- **alpha**: Prior hyperparameter (default: 1)
-- **gamma**: Regularization parameter (default: 6e-3)
-
-### Image Inpainting
-- **N_MC**: Total number of MCMC iterations (default: 5000)
-- **N_bi**: Number of burn-in iterations (default: 200)
-- **rho**: Standard deviation parameter (default: 3)
-- **alpha**: Prior hyperparameter (default: 1)
-- **beta**: Regularization parameter (default: 0.2)
-- **BSNR**: Blurred Signal-to-Noise Ratio (default: 40 dB)
-
-## Output
-
-### Image Deconvolution
-The algorithm produces:
-- PSNR and SNR metrics
-- Visualizations of:
-  - Original image
-  - Blurred and noisy observation
-  - MMSE estimates of x, z, and u
-  - 90% credibility intervals
-
-### Image Inpainting
-The algorithm produces:
-- ISNR, MSE, and SSIM metrics
-- Visualizations of:
-  - Original image
-  - Decimat
-2. **Image Loading**: The Python version tries to load `lena.bmp` but falls back to scikit-image's camera image if not found.
-
-3. **FFT**: Uses NumPy's FFT implementation (`numpy.fft.fft2` and `numpy.fft.ifft2`).
-
-4. **Multivariate Normal Sampling**: MATLAB's `mvnrnd` is replaced with direct sampling using NumPy for diagonal covariance matrices.
-
-5. **Progress Bar**: Uses `tqdm` instead of MATLAB's `waitbar`.
-**Image Files**: 
-  - For deconvolution: Have `lena.bmp` in the working directory, or the code will use a fallback image.
-  - For inpainting: Have `cameraman.tif` in the working directory, or the code will use scikit-image's camera.
-- **Computational Intensity**: 
-  - Deconvolution: ~1000 iterations, takes a few minutes
-  - Inpainting: ~5000 iterations, more computationally intensive, may take 10-30 minutes
-- **Numerical Differences**: Results may differ slightly from MATLAB due to differences in random number generation and numerical precision.
-- **Memory Requirements**: The inpainting algorithm stores large arrays of samples and may require significant RAM for large images
-## Parameters
-
-- **N_MC**: Total number of MCMC iterations (default: 1000)
-- **N_bi**: Number of burn-in iterations (default: 200)
-- **rho**: Standard deviation parameter (default: 20)
-- **alpha**: Prior hyperparameter (default: 1)
-- **gamma**: Regularization parameter (default: 6e-3)
-
-## Output
-
-The algorithm produces:
-- PSNR and SNR metrics
-- Visualizations of:
-  - Original image
-  - Blurred and noisy observation
-  - MMSE estimates of x, z, and u
-  - 90% credibility intervals
-
-## Notes
-
-- Make sure you have the `lena.bmp` file in the appropriate directory, or the code will use a fallback image.
-- The algorithm is computationally intensive and may take several minutes to complete.
-- Results may differ slightly from MATLAB due to differences in random number generation and numerical precision.
+    ├── HXconv.py
+    ├── initial_parameters.py
+```
